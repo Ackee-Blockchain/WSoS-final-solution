@@ -16,7 +16,8 @@ pub mod auction {
         let state = &mut ctx.accounts.state;
 
         state.auction_end_time = Clock::get()?.unix_timestamp + auction_duration as UnixTimestamp;
-        // by default zeroes but let's do it explicitly
+        state.treasury = *ctx.accounts.treasury.key;
+        state.initializer = *ctx.accounts.initializer.to_account_info().key;
         state.ended = false;
         state.highest_bid = 0;
         state.highest_bidder = Pubkey::default();
@@ -25,7 +26,12 @@ pub mod auction {
     }
     /// Bid
     pub fn bid(ctx: Context<Bid>, amount: u64) -> Result<()> {
+        let state = &mut ctx.accounts.state;
         let bid = &mut ctx.accounts.bid;
+
+        if Clock::get()?.unix_timestamp > state.auction_end_time {
+            panic!("Auction Inactive")
+        }
 
         if bid.bump == 0 {
             bid.bump = *ctx.bumps.get("bid").unwrap();
@@ -45,9 +51,6 @@ pub mod auction {
             ],
         )?;
 
-        // update state
-        let state = &mut ctx.accounts.state;
-
         bid.amount_locked = bid.amount_locked.checked_add(raised_by).unwrap();
 
         if amount > state.highest_bid {
@@ -63,7 +66,11 @@ pub mod auction {
         let state = &mut ctx.accounts.state;
 
         if Clock::get()?.unix_timestamp < state.auction_end_time as UnixTimestamp {
-            panic!("Elections in progress");
+            panic!("Auction Active");
+        }
+
+        if state.ended {
+            panic!("Auction Ended");
         }
 
         **ctx.accounts.treasury.lamports.borrow_mut() -= state.highest_bid;
