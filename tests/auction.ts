@@ -2,7 +2,7 @@ import * as anchor from "@project-serum/anchor";
 import { IdlAccounts, Program } from "@project-serum/anchor";
 import { Auction } from "../target/types/auction";
 import {before} from "mocha";
-import {LAMPORTS_PER_SOL, PublicKey, SystemProgram} from "@solana/web3.js";
+import {AccountInfo, LAMPORTS_PER_SOL, PublicKey, SystemProgram} from "@solana/web3.js";
 
 describe("auction", async () => {
   // Configure the client to use the local cluster.
@@ -16,6 +16,7 @@ describe("auction", async () => {
   const bidder1 = anchor.web3.Keypair.generate();
   const bidder2 = anchor.web3.Keypair.generate();
   const bidder3 = anchor.web3.Keypair.generate();
+  const rent = 890880;
 
     const [pda1, nonce1] = await PublicKey.findProgramAddress(
       [state.publicKey.toBytes(), bidder1.publicKey.toBytes()],
@@ -49,7 +50,19 @@ describe("auction", async () => {
         },
         signers: [state, treasury, initializer],
     });
-    console.log("Your transaction signature", tx);
+    let auctionState: IdlAccounts<Auction>["state"] = await program.account.state.fetch((state.publicKey));
+    let bal = await provider.connection.getBalance(treasury.publicKey) - rent;
+    
+    console.log("State Initialized!");
+    console.log("\tinitializer: ", auctionState.initializer.toString());
+    console.log("\ttreasury: ", auctionState.treasury.toString());
+    console.log("\tauction_end_time: ", auctionState.auctionEndTime.toString());
+    console.log("\tended: ", auctionState.ended);
+    console.log("\thighest_bid: ", auctionState.highestBid.toString());
+    console.log("\thighest_bidder: ", auctionState.highestBidder.toString());
+
+    console.log("\nTresury:");
+    console.log("\tbalance - rent_exempt: ", bal.toString())
   });
 
   it("Bidder1 Bid!", async () => {
@@ -70,9 +83,24 @@ describe("auction", async () => {
         },
         signers: [bidder1],
     });
-    console.log("Your transaction signature", tx);
-    let auctionState:IdlAccounts<Auction>["state"] = await program.account.state.fetch((state.publicKey));
-    console.log("Bidder PubKey", auctionState.treasury.toString());
+    let auctionState: IdlAccounts<Auction>["state"] = await program.account.state.fetch((state.publicKey));
+    let bidAccount: IdlAccounts<Auction>["bidInfo"] = await program.account.bidInfo.fetch(pda1);
+    let bal = await provider.connection.getBalance(treasury.publicKey) - rent;
+
+    console.log("Bidder1: ", bidder1.publicKey.toString())
+    console.log("\nBidInfo:")
+    console.log("\tamount_locked:", bidAccount.amountLocked.toString());
+
+    console.log("\nState:");
+    console.log("\tinitializer: ", auctionState.initializer.toString());
+    console.log("\ttreasury: ", auctionState.treasury.toString());
+    console.log("\tauction_end_time: ", auctionState.auctionEndTime.toString());
+    console.log("\tended: ", auctionState.ended);
+    console.log("\thighest_bid: ", auctionState.highestBid.toString());
+    console.log("\thighest_bidder: ", auctionState.highestBidder.toString());
+
+    console.log("\nTresury:");
+    console.log("\tbalance - rent_exempt: ", bal.toString())
   });
 
   it("Bidder2 Bid!", async () => {
@@ -93,9 +121,24 @@ describe("auction", async () => {
         },
         signers: [bidder2],
     });
-    console.log("Your transaction signature", tx);
-    let auctionState:IdlAccounts<Auction>["state"] = await program.account.state.fetch((state.publicKey));
-    console.log("Bidder PubKey", auctionState.treasury.toString());
+    let auctionState: IdlAccounts<Auction>["state"] = await program.account.state.fetch((state.publicKey));
+    let bidAccount: IdlAccounts<Auction>["bidInfo"] = await program.account.bidInfo.fetch(pda2);
+    let bal = await provider.connection.getBalance(treasury.publicKey) - rent;
+
+    console.log("Bidder2: ", bidder2.publicKey.toString())
+    console.log("\nBidInfo:")
+    console.log("\tamount_locked:", bidAccount.amountLocked.toString());
+
+    console.log("\nState:");
+    console.log("\tinitializer: ", auctionState.initializer.toString());
+    console.log("\ttreasury: ", auctionState.treasury.toString());
+    console.log("\tauction_end_time: ", auctionState.auctionEndTime.toString());
+    console.log("\tended: ", auctionState.ended);
+    console.log("\thighest_bid: ", auctionState.highestBid.toString());
+    console.log("\thighest_bidder: ", auctionState.highestBidder.toString());
+
+    console.log("\nTresury:");
+    console.log("\tbalance - rent_exempt: ", bal.toString())
   });
 
   it("Bidder3 Bid!", async () => {
@@ -116,9 +159,24 @@ describe("auction", async () => {
         },
         signers: [bidder3],
     });
-    console.log("Your transaction signature", tx);
-    let auctionState:IdlAccounts<Auction>["state"] = await program.account.state.fetch((state.publicKey));
-    console.log("Bidder PubKey", auctionState.treasury.toString());
+    let auctionState: IdlAccounts<Auction>["state"] = await program.account.state.fetch((state.publicKey));
+    let bidAccount: IdlAccounts<Auction>["bidInfo"] = await program.account.bidInfo.fetch(pda3);
+    let bal = await provider.connection.getBalance(treasury.publicKey) - rent;
+    
+    console.log("Bidder3: ", bidder3.publicKey.toString())
+    console.log("\nBidInfo:")
+    console.log("\tamount_locked:", bidAccount.amountLocked.toString());
+
+    console.log("\nState:");
+    console.log("\tinitializer: ", auctionState.initializer.toString());
+    console.log("\ttreasury: ", auctionState.treasury.toString());
+    console.log("\tauction_end_time: ", auctionState.auctionEndTime.toString());
+    console.log("\tended: ", auctionState.ended);
+    console.log("\thighest_bid: ", auctionState.highestBid.toString());
+    console.log("\thighest_bidder: ", auctionState.highestBidder.toString());
+
+    console.log("\nTresury:");
+    console.log("\tbalance - rent_exempt: ", bal.toString())
   });
 
   it("Bidder1 Bid Higher!", async () => {
@@ -139,9 +197,24 @@ describe("auction", async () => {
         },
         signers: [bidder1],
     });
-    console.log("Your transaction signature", tx);
-    let auctionState:IdlAccounts<Auction>["state"] = await program.account.state.fetch((state.publicKey));
-    console.log("Bidder PubKey", auctionState.treasury.toString());
+    let auctionState: IdlAccounts<Auction>["state"] = await program.account.state.fetch((state.publicKey));
+    let bidAccount: IdlAccounts<Auction>["bidInfo"] = await program.account.bidInfo.fetch(pda1);
+    let bal = await provider.connection.getBalance(treasury.publicKey) - rent;
+
+    console.log("Bidder1: ", bidder1.publicKey.toString())
+    console.log("\nBidInfo:")
+    console.log("\tamount_locked:", bidAccount.amountLocked.toString());
+
+    console.log("\nState:");
+    console.log("\tinitializer: ", auctionState.initializer.toString());
+    console.log("\ttreasury: ", auctionState.treasury.toString());
+    console.log("\tauction_end_time: ", auctionState.auctionEndTime.toString());
+    console.log("\tended: ", auctionState.ended);
+    console.log("\thighest_bid: ", auctionState.highestBid.toString());
+    console.log("\thighest_bidder: ", auctionState.highestBidder.toString());
+
+    console.log("\nTresury:");
+    console.log("\tbalance - rent_exempt: ", bal.toString())
   });
 
   it("End auction!", async () => {
@@ -159,12 +232,24 @@ describe("auction", async () => {
         },
         signers: [initializer],
     });
-    console.log("Your transaction signature", tx);
+    let auctionState: IdlAccounts<Auction>["state"] = await program.account.state.fetch((state.publicKey));
+    let bal = await provider.connection.getBalance(treasury.publicKey) - rent;
+    
+    console.log("State Initialized!");
+    console.log("\tinitializer: ", auctionState.initializer.toString());
+    console.log("\ttreasury: ", auctionState.treasury.toString());
+    console.log("\tauction_end_time: ", auctionState.auctionEndTime.toString());
+    console.log("\tended: ", auctionState.ended);
+    console.log("\thighest_bid: ", auctionState.highestBid.toString());
+    console.log("\thighest_bidder: ", auctionState.highestBidder.toString());
+
+    console.log("\nTresury:");
+    console.log("\tbalance - rent_exempt: ", bal.toString())
   });
 
   it("Refund losers!", async () => {
 
-    const tx = await program.rpc.refund(
+    const tx1 = await program.rpc.refund(
       {
         accounts: {
           state: state.publicKey,
@@ -174,6 +259,22 @@ describe("auction", async () => {
         },
         signers: [bidder2],
     });
-    console.log("Your transaction signature", tx);
+    let bal1 = await provider.connection.getBalance(treasury.publicKey) - rent;
+    console.log("Tresury:");
+    console.log("\tbalance - rent_exempt: ", bal1.toString());
+
+    const tx2 = await program.rpc.refund(
+        {
+          accounts: {
+            state: state.publicKey,
+            bidAccount: pda3,
+            bidder: bidder3.publicKey,
+            treasury: treasury.publicKey,
+          },
+          signers: [bidder3],
+      });
+      let bal2 = await provider.connection.getBalance(treasury.publicKey) - rent;
+      console.log("Tresury:");
+      console.log("\tbalance - rent_exempt: ", bal2.toString());
   });
 });
