@@ -33,12 +33,7 @@ pub mod auction {
             panic!("Auction Inactive")
         }
 
-        if bid.bump == 0 {
-            bid.bump = *ctx.bumps.get("bid").unwrap();
-        }
-
         let raised_by = amount.saturating_sub(bid.amount_locked);
-
         invoke(
             &system_instruction::transfer(
                 ctx.accounts.bidder.key,
@@ -52,6 +47,7 @@ pub mod auction {
         )?;
 
         bid.amount_locked = bid.amount_locked.checked_add(raised_by).unwrap();
+        bid.bump = *ctx.bumps.get("bid").unwrap();
 
         if amount > state.highest_bid {
             state.highest_bid = amount;
@@ -67,10 +63,6 @@ pub mod auction {
 
         if Clock::get()?.unix_timestamp < state.auction_end_time as UnixTimestamp {
             panic!("Auction Active");
-        }
-
-        if state.ended {
-            panic!("Auction Ended");
         }
 
         **ctx.accounts.treasury.lamports.borrow_mut() -= state.highest_bid;
@@ -137,7 +129,7 @@ pub struct Bid<'info> {
 
 #[derive(Accounts)]
 pub struct EndAuction<'info> {
-    #[account(mut, has_one = treasury, has_one = initializer)]
+    #[account(mut, has_one = treasury, has_one = initializer, constraint = state.ended == false)]
     pub state: Account<'info, State>,
     #[account(mut)]
     pub initializer: Signer<'info>,
