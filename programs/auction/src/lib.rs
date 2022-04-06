@@ -3,7 +3,7 @@ use anchor_lang::{
     solana_program::{clock::UnixTimestamp, program::invoke, system_instruction},
 };
 
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+declare_id!("856H1JKgextZ5gKgPdRJwg8ukWPdwTbpQuZmcSiyiRrV");
 
 #[program]
 pub mod auction {
@@ -119,7 +119,7 @@ pub struct Bid<'info> {
     pub bid: Account<'info, BidInfo>,
     #[account(mut)]
     pub bidder: Signer<'info>,
-    #[account(has_one = treasury)]
+    #[account(mut, has_one = treasury)]
     pub state: Account<'info, State>,
     /// CHECK: already checked by state constraint
     #[account(mut)]
@@ -129,17 +129,23 @@ pub struct Bid<'info> {
 
 #[derive(Accounts)]
 pub struct EndAuction<'info> {
-    #[account(mut, has_one = treasury, has_one = initializer, constraint = state.ended == false)]
+    #[account(
+        mut,
+        has_one = treasury,
+        has_one = initializer,
+        has_one = highest_bidder,
+        constraint = state.ended == false
+    )]
     pub state: Account<'info, State>,
     #[account(mut)]
     pub initializer: Signer<'info>,
     /// CHECK: already checked by state constraint
     #[account(mut)]
     pub treasury: AccountInfo<'info>,
-    #[account(mut, constraint = *bidder.key == state.highest_bidder)]
+    #[account(mut)]
     /// CHECK:
-    pub bidder: AccountInfo<'info>,
-    #[account(mut, seeds = [state.to_account_info().key.as_ref(), bidder.to_account_info().key.as_ref()], bump = winners_bid.bump, close = bidder)]
+    pub highest_bidder: AccountInfo<'info>,
+    #[account(mut, seeds = [state.to_account_info().key.as_ref(), highest_bidder.to_account_info().key.as_ref()], bump = winners_bid.bump, close = highest_bidder)]
     pub winners_bid: Account<'info, BidInfo>,
 }
 
